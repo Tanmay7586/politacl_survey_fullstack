@@ -1,0 +1,42 @@
+/* Your existing hover underline animation */
+.hover-underline-animation {
+  display: inline-block;
+  position: relative;
+  color: #fff; /* Assuming white text */
+  text-decoration: none;
+}
+
+.hover-underline-animation::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  transform: scaleX(0);
+  height: 2px;
+  bottom: -2px; /* Adjusted to appear slightly below the text */
+  left: 0;
+  background-color: white;
+  transform-origin: bottom right;
+  transition: transform 0.25s ease-out;
+}
+
+.hover-underline-animation:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+/* Active link (permanent underline) */
+.active-underline {
+  position: relative;
+}
+
+.active-underline::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background-color: white;
+  transform: scaleX(1); /* Keeps the underline visible for active links */
+  transform-origin: bottom left;
+}
