@@ -37,7 +37,7 @@ const FormCreation = () => {
     const pollData = {
       title,
       pollType,
-      options,
+      options: options.map((optionText) => ({ text: optionText })), // Convert each option to an object with `text`
       settings,
     };
 
