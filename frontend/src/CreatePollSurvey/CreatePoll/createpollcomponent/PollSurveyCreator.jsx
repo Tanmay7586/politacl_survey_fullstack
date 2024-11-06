@@ -19,24 +19,31 @@ const PollSurveyCreator = () => {
   const [selectedOption, setSelectedOption] = useState("");
   const [name, setName] = useState("");
   const [comment, setComment] = useState("");
+  const [commentList, setCommentList] = useState([]);
 
   useEffect(() => {
     if (location.state) {
       setPollData(location.state);
     } else {
       if (pollId) {
-        fetch(`/api/polls/${pollId}`)
+        fetch(`http://localhost:5000/api/polls/${pollId}`)
           .then((response) => response.json())
-          .then((data) => setPollData(data));
+          .then((data) => setPollData(data))
+          .catch((error) => console.error("Error fetching poll data:", error));
       }
     }
-  }, [location, params]);
+  }, [location, pollId]);
 
   if (!pollData.title) {
     return <div>Error: No poll data found.</div>;
   }
 
   const handleVote = () => {
+    if (!selectedOption) {
+      alert("Please select an option to vote!");
+      return;
+    }
+
     fetch(`/api/polls/${pollId}/vote`, {
       method: "POST",
       headers: {
@@ -51,8 +58,27 @@ const PollSurveyCreator = () => {
           throw new Error("Failed to cast vote");
         }
       })
-      .then((data) => console.log("Vote submitted:", data))
-      .catch((error) => console.error("Error casting vote:", error));
+      .then((data) => {
+        console.log("Vote submitted:", data);
+        alert("Vote submitted successfully!"); // Display success message
+      })
+      .catch((error) => {
+        console.error("Error casting vote:", error);
+        alert("Error submitting your vote");
+      });
+  };
+
+  const handleCommentSubmission = (e) => {
+    e.preventDefault();
+    if (!comment.trim()) {
+      alert("Please enter a comment");
+      return;
+    }
+
+    // Add comment to the list (simulating a post request)
+    const newComment = { name, comment };
+    setCommentList([...commentList, newComment]);
+    setComment(""); // Clear the comment field after submission
   };
 
   return (
@@ -107,22 +133,6 @@ const PollSurveyCreator = () => {
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
-            <div className="mb-2">
-              <label
-                className="block text-gray-700 text-sm font-semibold mb-1 mt-2"
-                htmlFor="comment"
-              >
-                Comment (Optional)
-              </label>
-              <textarea
-                className="appearance-none border border-[#dee2e6] rounded w-full mb-5 py-3 px-3 text-gray-700 leading-tight focus:outline-none focus:border-indigo-500"
-                id="comment"
-                rows="3"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-              />
-            </div>
-
             <div className="flex flex-col sm:flex-row items-center">
               <button
                 className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center mr-4 mb-2 sm:mb-0"
@@ -173,28 +183,50 @@ const PollSurveyCreator = () => {
           {/* Comments section */}
           <div className="bg-white border rounded-lg shadow-sm p-6 mb-8">
             <h3 className="font-semibold mb-4">Comments</h3>
-            <div className="bg-blue-50 p-4 rounded mb-4">
-              <p className="text-sm text-blue-800">
-                No comments yet. Be the first to write one!
-              </p>
-            </div>
-            <div className="flex items-start space-x-4">
+            {commentList.length === 0 ? (
+              <div className="bg-blue-50 p-4 rounded mb-4">
+                <p className="text-sm text-blue-800">
+                  No comments yet. Be the first to write one!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {commentList.map((comment, index) => (
+                  <div key={index} className="bg-gray-50 p-4 rounded">
+                    <p className="text-sm font-semibold">{comment.name}</p>
+                    <p className="text-sm text-gray-600">{comment.comment}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            <form
+              onSubmit={handleCommentSubmission}
+              className="flex items-start space-x-4"
+            >
               <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
               <div className="flex-grow">
                 <input
                   type="text"
                   placeholder="Enter your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="w-full border rounded px-3 py-2 mb-2"
                 />
                 <textarea
+                  placeholder="Enter your comment"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
                   className="w-full border rounded px-3 py-2 mb-2"
                   rows="3"
                 ></textarea>
-                <button className="bg-indigo-600 text-white rounded px-2 py-1 text-sm">
+                <button
+                  type="submit"
+                  className="bg-indigo-600 text-white rounded px-2 py-1 text-sm"
+                >
                   Add comment
                 </button>
               </div>
-            </div>
+            </form>
           </div>
 
           <div className="flex items-center justify-between">

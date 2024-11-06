@@ -20,14 +20,13 @@ const pollSchema = new mongoose.Schema({
     allowComments: { type: Boolean, default: false },
     closeOnSchedule: { type: Boolean, default: false },
   },
-  // Optionally, you can store the voter's name and comment
-  // votes: [
-  //   {
-  //     name: String,
-  //     comment: String,
-  //     selectedOption: String,
-  //   },
-  // ],
+  votes: [
+    {
+      name: String,
+      comment: String,
+      selectedOption: String,
+    },
+  ],
   createdAt: { type: Date, default: Date.now },
 });
 
