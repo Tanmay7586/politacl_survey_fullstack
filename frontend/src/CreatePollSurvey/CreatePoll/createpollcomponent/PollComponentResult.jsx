@@ -1,4 +1,4 @@
-import React from "react";
+import { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -10,23 +10,36 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { ArrowLeft, Share2 } from "lucide-react";
-import { Link } from "react-router-dom"; // Import Link
+import { Link, useParams, useLocation } from "react-router-dom"; // Import Link, useParams, and useLocation
 
-const PollSurveyResults = () => {
-  const pollData = [
-    { name: "Narendra", points: 3 },
-    { name: "Raju karemore", points: 2 },
-    { name: "Rahul Gandhi", points: 1 },
-    { name: "Jagan", points: 0 },
-  ];
+const PollComponentResult = () => {
+  const { pollId } = useParams();
+  const location = useLocation();
+  const pollData = location.state || {};
+  const [voterData, setVoterData] = useState([]);
 
-  const voterData = [
-    { name: "Mamatha", yes: true, no: false },
-    { name: "Chitti", yes: false, no: true },
-    { name: "Siva", yes: false, no: true },
-  ];
+  useEffect(() => {
+    // Fetch the poll data from the server using the pollId
+    const fetchPollData = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/polls/${pollId}`
+        );
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        const data = await response.json();
+        setVoterData(data.voters || []);
+      } catch (error) {
+        console.error("Error fetching poll data:", error);
+      }
+    };
+
+    fetchPollData();
+  }, [pollId]);
 
   const colors = ["#4ade80", "#f87171", "#a78bfa", "#fbbf24"];
+
   return (
     <div>
       <div className="max-w-3xl mx-auto p-4 mt-4">
@@ -44,19 +57,20 @@ const PollSurveyResults = () => {
           <div className="bg-white border rounded-lg shadow-sm p-6 mb-8">
             <h2 className="font-semibold mb-1">Give the priority of winning</h2>
             <p className="text-sm text-gray-500 mb-4">
-              by Mamatha · 1 minute ago
+              by {pollData.createdBy || "User"} -{" "}
+              {pollData.createdAt || "1 minute ago"}
             </p>
 
             <div className="mb-4">
               <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={pollData} layout="vertical">
+                <BarChart data={pollData.options || []} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
                   <YAxis dataKey="name" type="category" />
                   <Tooltip />
                   <Legend />
                   <Bar dataKey="points" fill="#8884d8">
-                    {pollData.map((entry, index) => (
+                    {pollData.options?.map((entry, index) => (
                       <Bar
                         key={`cell-${index}`}
                         fill={colors[index % colors.length]}
@@ -67,15 +81,20 @@ const PollSurveyResults = () => {
               </ResponsiveContainer>
             </div>
 
-            <p className="text-sm text-gray-500 mb-4">Total votes: 1</p>
+            <p className="text-sm text-gray-500 mb-4">
+              Total votes: {pollData.totalVotes || 1}
+            </p>
 
             <div className="flex justify-between items-center">
               <button className="flex items-center text-green-600 bg-green-100 px-3 py-1 rounded-full text-sm">
                 <span className="mr-1">●</span> Live results
               </button>
-              <button className="flex items-center text-gray-600 text-sm">
+              <Link
+                to={`/polls/${pollId}`} // Navigate dynamically using pollId
+                className="flex items-center text-gray-600 text-sm"
+              >
                 <ArrowLeft size={16} className="mr-1" /> Back to poll
-              </button>
+              </Link>
               <button className="flex items-center text-gray-600 text-sm">
                 <Share2 size={16} className="mr-1" /> Share
               </button>
@@ -102,14 +121,14 @@ const PollSurveyResults = () => {
               <tbody>
                 <tr className="border-b text-sm text-gray-500">
                   <td colSpan="3" className="py-2">
-                    2 participants
+                    {voterData.length} participants
                   </td>
                 </tr>
                 {voterData.map((voter, index) => (
                   <tr key={index} className="border-b last:border-b-0">
                     <td className="py-2 flex items-center">
                       <span className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center text-gray-500">
-                        {voter.name[0]}
+                        {voter.name[0].toUpperCase()}
                       </span>
                       {voter.name}
                     </td>
@@ -171,7 +190,6 @@ const PollSurveyResults = () => {
           </div>
 
           <Link to="/create-a-poll">
-            {" "}
             <button className="bg-indigo-600 text-white w-32 px-1 py-3 rounded text-xs">
               Create a poll
             </button>
@@ -182,4 +200,4 @@ const PollSurveyResults = () => {
   );
 };
 
-export default PollSurveyResults;
+export default PollComponentResult;

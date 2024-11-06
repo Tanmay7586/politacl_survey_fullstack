@@ -1,5 +1,10 @@
 import React from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  useParams,
+} from "react-router-dom";
 import Home from "./Home/Home";
 import CreateSurvey from "./CreatePollSurvey/CreateSurvey/CreateSurvey";
 import PollSurvey from "./PollSurvey/PollSurvey";
@@ -49,8 +54,14 @@ const App = () => {
           <Route path="/show-result/:pollId" element={<PollSurveyResults />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog-post" element={<BlogPost />} />
-          <Route path="/rankingpoll" element={<PollComponent />} />
-          <Route path="/rankingpollresult" element={<PollComponentResult />} />
+          <Route
+            path="/poll-survey-creator/rankingpoll/:pollId"
+            element={<PollComponent />}
+          />
+          <Route
+            path="/poll-survey-creator/rankingpoll-result/:pollId"
+            element={<PollComponentResult />}
+          />
         </Routes>
         <Footer />
       </div>

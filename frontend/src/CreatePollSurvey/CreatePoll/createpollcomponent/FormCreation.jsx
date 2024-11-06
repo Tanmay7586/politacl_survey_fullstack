@@ -18,6 +18,10 @@ const FormCreation = () => {
     setOptions([...options, ""]);
   };
 
+  const handlePollTypeChange = (type) => {
+    setPollType(type);
+  };
+
   const handleDeleteOption = (index) => {
     const newOptions = options.filter((_, i) => i !== index);
     setOptions(newOptions);
@@ -37,7 +41,7 @@ const FormCreation = () => {
     const pollData = {
       title,
       pollType,
-      options: options.map((optionText) => ({ text: optionText })), // Convert each option to an object with `text`
+      options: options.map((optionText) => ({ text: optionText })), // Convert each option to an object with text
       settings,
     };
 
@@ -54,7 +58,13 @@ const FormCreation = () => {
 
       if (response.ok) {
         console.log("Poll created successfully:", data);
-        navigate(`/poll-survey-creator/${data._id}`, { state: data });
+        if (pollType === "Multiple choice") {
+          navigate(`/poll-survey-creator/${data._id}`, { state: data });
+        } else if (pollType === "Ranking poll") {
+          navigate(`/poll-survey-creator/rankingpoll/${data._id}`, {
+            state: data,
+          });
+        }
       } else {
         console.error("Failed to create poll:", data.error);
       }
@@ -105,6 +115,7 @@ const FormCreation = () => {
                 onClick={() => {
                   setPollType("Multiple choice");
                   setIsDropdownOpen(false);
+                  handlePollTypeChange("Multiple choice");
                 }}
               >
                 Multiple choice
@@ -114,6 +125,7 @@ const FormCreation = () => {
                 onClick={() => {
                   setPollType("Ranking poll");
                   setIsDropdownOpen(false);
+                  handlePollTypeChange("Ranking poll");
                 }}
               >
                 Ranking poll

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import {
   Share2,
@@ -10,18 +10,28 @@ import {
   Facebook,
   Link2,
 } from "lucide-react";
-import { Link } from "react-router-dom"; // Import Link
+import { Link, useLocation, useParams } from "react-router-dom"; // Import Link, useLocation, and useParams
 
 const PollComponent = () => {
-  const [options, setOptions] = useState([
-    { id: "option1", content: "Narendra", votes: 3 },
-    { id: "option2", content: "Raju Karemore", votes: 2 },
-    { id: "option3", content: "Rahul Gandhi", votes: 1 },
-    { id: "option4", content: "Jagan", votes: 0 },
-  ]);
-
+  const [options, setOptions] = useState([]);
   const [isCopied, setIsCopied] = useState(false);
-  const shareUrl = "https://PoliticalSurvey.com/BDyNz98EyR";
+  const { pollId } = useParams();
+  const location = useLocation();
+  const pollData = location.state || {};
+
+  useEffect(() => {
+    if (pollData.options) {
+      setOptions(
+        pollData.options.map((option, index) => ({
+          ...option,
+          id: `option-${index}`, // Ensure each option has a unique id
+          votes: 0,
+        }))
+      );
+    }
+  }, [pollData]);
+
+  const shareUrl = `http://localhost:5173/poll-survey-creator/rankingpoll/${pollId}`;
 
   const onDragEnd = (result) => {
     if (!result.destination) return;
@@ -39,16 +49,31 @@ const PollComponent = () => {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
+  const handleVote = () => {
+    // Handle the vote logic here (e.g., update the votes in the database)
+    console.log("Voted options:", options);
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-8 lg:px-16 py-8">
-      <h1 className="text-2xl font-bold text-center mb-7">Create a Poll & Survey</h1>
+      <h1 className="text-2xl font-bold text-center mb-7">
+        Create a Poll & Survey
+      </h1>
       <p className="text-center text-gray-600 mb-20">
-        <span className="text-black">Create a Poll and survey </span> to accurately gauge public opinion on politics, including topics like demographics, party affiliation, key issues, candidate evaluation, voting intentions, media habits, and trust in government institutions.
+        <span className="text-black">Create a Poll and survey </span> to
+        accurately gauge public opinion on politics, including topics like
+        demographics, party affiliation, key issues, candidate evaluation,
+        voting intentions, media habits, and trust in government institutions.
       </p>
 
       <div className="border rounded-lg p-4 mb-6">
-        <h3 className="text-lg font-semibold mb-2">Give the priority of winning</h3>
-        <p className="text-xs text-gray-500 mb-4">by Merinatha - 54 seconds ago</p>
+        <h3 className="text-lg font-semibold mb-2">
+          Give the priority of winning
+        </h3>
+        <p className="text-xs text-gray-500 mb-4">
+          by {pollData.createdBy || "User"} -{" "}
+          {pollData.createdAt || "1 minute ago"}
+        </p>
         <p className="text-sm mb-4">Drag your preferred option to the top.</p>
 
         <DragDropContext onDragEnd={onDragEnd}>
@@ -60,7 +85,11 @@ const PollComponent = () => {
                 className="space-y-2"
               >
                 {options.map((option, index) => (
-                  <Draggable key={option.id} draggableId={option.id} index={index}>
+                  <Draggable
+                    key={option.id}
+                    draggableId={option.id}
+                    index={index}
+                  >
                     {(provided) => (
                       <li
                         ref={provided.innerRef}
@@ -68,7 +97,7 @@ const PollComponent = () => {
                         {...provided.dragHandleProps}
                         className="flex justify-between items-center bg-gray-100 p-2 rounded"
                       >
-                        <span>{option.content}</span>
+                        <span>{option.text}</span>
                         <span className="text-gray-500">{option.votes}</span>
                       </li>
                     )}
@@ -81,11 +110,14 @@ const PollComponent = () => {
         </DragDropContext>
 
         <div className="flex flex-col md:flex-row items-center justify-between mt-4">
-          <button className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center mb-2 md:mb-0">
+          <button
+            onClick={handleVote}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center mb-2 md:mb-0"
+          >
             Vote <span className="ml-1">→</span>
           </button>
           <div className="flex items-center space-x-4">
-            <Link to="/rankingpollresult">
+            <Link to={`/poll-survey-creator/rankingpoll-result/${pollId}`}>
               <button className="text-gray-600 flex items-center">
                 <BarChart2 size={18} className="mr-1" /> Show results
               </button>
@@ -146,7 +178,9 @@ const PollComponent = () => {
       <div className="bg-white border rounded-lg shadow-sm p-6 mb-8 mt-8">
         <h3 className="font-semibold mb-4">Comments</h3>
         <div className="bg-blue-50 p-4 rounded mb-4">
-          <p className="text-sm text-blue-800">No comments yet. Be the first to write one!</p>
+          <p className="text-sm text-blue-800">
+            No comments yet. Be the first to write one!
+          </p>
         </div>
         <div className="flex items-start space-x-4">
           <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
@@ -171,7 +205,8 @@ const PollComponent = () => {
         <div className="mb-4 md:mb-0">
           <h3 className="font-semibold">Create Your Own Poll</h3>
           <p className="text-sm text-gray-600 w-3/4">
-            Want to create your own poll? With Political Survey anyone can easily create an online poll in seconds.
+            Want to create your own poll? With Political Survey anyone can
+            easily create an online poll in seconds.
           </p>
         </div>
         <button className="bg-indigo-600 text-white w-full md:w-32 px-1 py-3 rounded text-xs">
