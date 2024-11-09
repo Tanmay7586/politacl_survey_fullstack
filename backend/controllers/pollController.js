@@ -2,16 +2,15 @@
 
 const Poll = require("../models/Poll");
 
+// Create a new poll
 exports.createPoll = async (req, res) => {
   try {
-    // Check if title is provided in the request body
     const { title, options } = req.body;
     if (!title || title.trim() === "") {
       return res.status(400).json({ error: "Poll title is required" });
     }
 
-    // Create the poll and save it
-    const poll = new Poll(req.body);
+    const poll = new Poll({ title, options });
     const createdPoll = await poll.save();
     res.json(createdPoll);
   } catch (error) {
@@ -20,6 +19,7 @@ exports.createPoll = async (req, res) => {
   }
 };
 
+// Get a poll by its ID
 exports.getPollById = async (req, res) => {
   try {
     const pollId = req.params.pollId;
@@ -34,29 +34,26 @@ exports.getPollById = async (req, res) => {
   }
 };
 
+// Cast a vote in a poll
 exports.castVote = async (req, res) => {
   try {
     const pollId = req.params.pollId;
     const { selectedOption, name, comment } = req.body;
 
-    // Find the poll
     const poll = await Poll.findById(pollId);
     if (!poll) {
       return res.status(404).json({ error: "Poll not found" });
     }
 
-    // Find the selected option and increment its votes
     const option = poll.options.find((opt) => opt.text === selectedOption);
     if (option) {
       option.votes += 1;
 
-      // If name or comment provided, store it in the votes array
       if (name || comment) {
         poll.votes = poll.votes || [];
         poll.votes.push({ name, comment, selectedOption });
       }
 
-      // Save the poll with updated votes
       await poll.save();
       res.json({ message: "Vote submitted successfully" });
     } else {
@@ -65,5 +62,16 @@ exports.castVote = async (req, res) => {
   } catch (error) {
     console.error("Error casting vote:", error);
     res.status(500).json({ error: "Failed to cast vote" });
+  }
+};
+
+// Retrieve all polls
+exports.getAllPolls = async (req, res) => {
+  try {
+    const polls = await Poll.find();
+    res.status(200).json(polls);
+  } catch (error) {
+    console.error("Error fetching polls:", error);
+    res.status(500).json({ error: "Failed to fetch polls" });
   }
 };

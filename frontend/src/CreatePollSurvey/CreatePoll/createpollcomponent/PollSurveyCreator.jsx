@@ -26,7 +26,7 @@ const PollSurveyCreator = () => {
       setPollData(location.state);
     } else {
       if (pollId) {
-        fetch(`http://localhost:5000/api/polls/${pollId}`)
+        fetch(`import.meta.env.VITE_API_URL+/api/polls/${pollId}`)
           .then((response) => response.json())
           .then((data) => setPollData(data))
           .catch((error) => console.error("Error fetching poll data:", error));

@@ -1,30 +1,27 @@
 import React, { useState } from "react";
-import { PlusCircle, X, ChevronDown } from "lucide-react";
+import { PlusCircle, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const FormCreation = () => {
   const [title, setTitle] = useState("");
   const [options, setOptions] = useState(["", ""]);
-  const [pollType, setPollType] = useState("Multiple choice");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [settings, setSettings] = useState({
     requireNames: false,
     allowComments: false,
     closeOnSchedule: false,
   });
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleAddOption = () => {
     setOptions([...options, ""]);
   };
 
-  const handlePollTypeChange = (type) => {
-    setPollType(type);
-  };
-
   const handleDeleteOption = (index) => {
-    const newOptions = options.filter((_, i) => i !== index);
-    setOptions(newOptions);
+    if (options.length > 2) {
+      const newOptions = options.filter((_, i) => i !== index);
+      setOptions(newOptions);
+    }
   };
 
   const handleOptionChange = (index, value) => {
@@ -38,14 +35,27 @@ const FormCreation = () => {
   };
 
   const handleCreatePoll = async () => {
-    const pollData = {
-      title,
-      pollType,
-      options: options.map((optionText) => ({ text: optionText })), // Convert each option to an object with text
-      settings,
-    };
-
     try {
+      // Validate inputs
+      if (!title.trim()) {
+        setError("Title is required");
+        return;
+      }
+
+      const validOptions = options.filter((opt) => opt.trim() !== "");
+      if (validOptions.length < 2) {
+        setError("At least two options are required");
+        return;
+      }
+
+      const pollData = {
+        title,
+        pollType: "Multiple choice",
+        options: options.filter((opt) => opt.trim()).map((text) => ({ text })),
+        settings,
+        createdAt: new Date(),
+      };
+
       const response = await fetch("http://localhost:5000/api/polls/create", {
         method: "POST",
         headers: {
@@ -58,23 +68,34 @@ const FormCreation = () => {
 
       if (response.ok) {
         console.log("Poll created successfully:", data);
-        if (pollType === "Multiple choice") {
-          navigate(`/poll-survey-creator/${data._id}`, { state: data });
-        } else if (pollType === "Ranking poll") {
-          navigate(`/poll-survey-creator/rankingpoll/${data._id}`, {
-            state: data,
-          });
-        }
+        // Navigate to poll details page with the created poll data
+        navigate(`/poll-survey-creator/${data._id}`, {
+          state: {
+            ...data,
+            isNewPoll: true, // Flag to indicate this is a newly created poll
+            pollData: {
+              title: data.title,
+              options: data.options,
+              settings: data.settings,
+              _id: data._id,
+            },
+          },
+        });
       } else {
-        console.error("Failed to create poll:", data.error);
+        setError(data.error || "Failed to create poll");
       }
     } catch (error) {
       console.error("Error creating poll:", error);
+      setError("Failed to create poll. Please try again.");
     }
   };
 
   return (
     <div className="max-w-2xl p-6 bg-white rounded-lg mx-auto -mt-8 border border-blue-500">
+      {error && (
+        <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">{error}</div>
+      )}
+
       <div className="mb-4">
         <label
           htmlFor="title"
@@ -100,38 +121,8 @@ const FormCreation = () => {
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Poll type
         </label>
-        <div className="relative">
-          <button
-            className="w-full p-2 border border-gray-300 rounded-md bg-white text-left flex items-center justify-between"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          >
-            <span>{pollType}</span>
-            <ChevronDown size={20} />
-          </button>
-          {isDropdownOpen && (
-            <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1">
-              <button
-                className="w-full p-2 text-left hover:bg-gray-100"
-                onClick={() => {
-                  setPollType("Multiple choice");
-                  setIsDropdownOpen(false);
-                  handlePollTypeChange("Multiple choice");
-                }}
-              >
-                Multiple choice
-              </button>
-              <button
-                className="w-full p-2 text-left hover:bg-gray-100"
-                onClick={() => {
-                  setPollType("Ranking poll");
-                  setIsDropdownOpen(false);
-                  handlePollTypeChange("Ranking poll");
-                }}
-              >
-                Ranking poll
-              </button>
-            </div>
-          )}
+        <div className="p-2 border border-gray-300 rounded-md bg-gray-100 text-left">
+          Multiple choice
         </div>
       </div>
 
@@ -148,24 +139,22 @@ const FormCreation = () => {
               value={option}
               onChange={(e) => handleOptionChange(index, e.target.value)}
             />
-            <button
-              onClick={() => handleDeleteOption(index)}
-              className="text-gray-400 hover:text-red-500"
-            >
-              <X size={20} />
-            </button>
+            {options.length > 2 && (
+              <button
+                onClick={() => handleDeleteOption(index)}
+                className="text-gray-400 hover:text-red-500"
+              >
+                <X size={20} />
+              </button>
+            )}
           </div>
         ))}
-        <div className="flex items-center">
-          <button
-            onClick={handleAddOption}
-            className="text-blue-600 flex items-center mr-4"
-          >
-            <PlusCircle size={20} className="mr-1" /> Add option
-          </button>
-          <span className="text-gray-400">or</span>
-          <button className="text-blue-600 ml-4">Add "Other"</button>
-        </div>
+        <button
+          onClick={handleAddOption}
+          className="text-blue-600 flex items-center mr-4"
+        >
+          <PlusCircle size={20} className="mr-1" /> Add option
+        </button>
       </div>
 
       <div className="mb-6">

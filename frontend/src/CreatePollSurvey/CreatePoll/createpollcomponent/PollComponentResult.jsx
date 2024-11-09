@@ -23,7 +23,7 @@ const PollComponentResult = () => {
     const fetchPollData = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5000/api/polls/${pollId}`
+          `import.meta.env.VITE_API_URL+/api/polls/${pollId}`
         );
         if (!response.ok) {
           throw new Error("Network response was not ok");
